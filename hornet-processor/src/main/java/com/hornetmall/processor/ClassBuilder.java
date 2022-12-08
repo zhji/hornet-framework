@@ -246,10 +246,10 @@ public class ClassBuilder {
                 .addType(TypeSpec.classBuilder("Authorities").addModifiers(Modifier.PUBLIC,Modifier.STATIC)
 
                         .addField(FieldSpec.builder(String.class,"CREATE").addModifiers(Modifier.PUBLIC,Modifier.STATIC,Modifier.FINAL).initializer("MODULE+$S+AUTHORITY_NAME+$S",":",":create").build())
-                        .addField(FieldSpec.builder(String.class,"UPDATE").addModifiers(Modifier.PUBLIC,Modifier.STATIC,Modifier.FINAL).initializer("MODULE+$S+AUTHORITY_NAME+$S",":",":create").build())
-                        .addField(FieldSpec.builder(String.class,"PATCH").addModifiers(Modifier.PUBLIC,Modifier.STATIC,Modifier.FINAL).initializer("MODULE+$S+AUTHORITY_NAME+$S",":",":create").build())
-                        .addField(FieldSpec.builder(String.class,"DELETE").addModifiers(Modifier.PUBLIC,Modifier.STATIC,Modifier.FINAL).initializer("MODULE+$S+AUTHORITY_NAME+$S",":",":create").build())
-                        .addField(FieldSpec.builder(String.class,"QUERY").addModifiers(Modifier.PUBLIC,Modifier.STATIC,Modifier.FINAL).initializer("MODULE+$S+AUTHORITY_NAME+$S",":",":create").build())
+                        .addField(FieldSpec.builder(String.class,"UPDATE").addModifiers(Modifier.PUBLIC,Modifier.STATIC,Modifier.FINAL).initializer("MODULE+$S+AUTHORITY_NAME+$S",":",":update").build())
+                        .addField(FieldSpec.builder(String.class,"PATCH").addModifiers(Modifier.PUBLIC,Modifier.STATIC,Modifier.FINAL).initializer("MODULE+$S+AUTHORITY_NAME+$S",":",":patch").build())
+                        .addField(FieldSpec.builder(String.class,"DELETE").addModifiers(Modifier.PUBLIC,Modifier.STATIC,Modifier.FINAL).initializer("MODULE+$S+AUTHORITY_NAME+$S",":",":delete").build())
+                        .addField(FieldSpec.builder(String.class,"QUERY").addModifiers(Modifier.PUBLIC,Modifier.STATIC,Modifier.FINAL).initializer("MODULE+$S+AUTHORITY_NAME+$S",":",":query").build())
                         .build())
                 .build();
     }
@@ -342,7 +342,7 @@ public class ClassBuilder {
                         .addModifiers(Modifier.PUBLIC)
                         .returns(ResponseEntity.class)
 
-                        .addAnnotation(AnnotationSpec.builder(PatchMapping.class).addMember("value","$S","/{id}").build())
+                        .addAnnotation(AnnotationSpec.builder(DeleteMapping.class).addMember("value","$S","/{id}").build())
                         .addAnnotation(AnnotationSpec.builder(PreAuthorize.class).addMember("value","\"hasAuthority('\"+ $T.Authorities.DELETE +\"')\"",entityMeta.getEntitiesName()).build())
                         .addParameter(ParameterSpec.builder(entityMeta.getIdClassName(),"id").addAnnotation(PathVariable.class).build())
                         .addCode(CodeBlock.builder()

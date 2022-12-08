@@ -6,7 +6,9 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Base64;
+import java.util.List;
 import java.util.UUID;
 
 @Data
@@ -15,6 +17,10 @@ import java.util.UUID;
 public class SecurityProperties {
 
     private Jwt jwt=new Jwt();
+
+    private List<String> permitAll=new ArrayList<>();
+    private List<String> authenticated=new ArrayList<>();
+
 
     @Data
     @Accessors(chain = true)
