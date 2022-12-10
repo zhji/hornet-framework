@@ -16,6 +16,8 @@ import java.util.UUID;
 @ConfigurationProperties(prefix = "hornet.security")
 public class SecurityProperties {
 
+    private boolean enable=true;
+
     private Jwt jwt=new Jwt();
 
     private List<String> permitAll=new ArrayList<>();
