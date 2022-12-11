@@ -1,5 +1,6 @@
 package com.hornetmall.processor;
 
+import com.hornetmall.processor.config.Hornet;
 import com.hornetmall.processor.meta.EntityMeta;
 import com.hornetmall.processor.util.ClassUtils;
 import com.squareup.javapoet.*;
@@ -256,13 +257,16 @@ public class ClassBuilder {
 
 
     public TypeSpec buildController(){
+        Hornet instance = Hornet.getInstance();
+
+        String module = instance.getModule();
 
 
         return TypeSpec.classBuilder(entityMeta.getControllerName())
                 .addModifiers(Modifier.PUBLIC)
                 .addAnnotation(AnnotationSpec.builder(RestController.class).build())
                 .addAnnotation(RequiredArgsConstructor.class)
-                .addAnnotation(AnnotationSpec.builder(RequestMapping.class).addMember("path","$S+$T.ENTITIES_NAME","/",entityMeta.getEntitiesName()).build())
+                .addAnnotation(AnnotationSpec.builder(RequestMapping.class).addMember("path","$T.API_PREFIX+$T.ENTITIES_NAME",entityMeta.getModuleConstants(),entityMeta.getEntitiesName()).build())
                 .addField(FieldSpec.builder(entityMeta.getServiceName() ,entityMeta.getServiceVariableName()).addModifiers(Modifier.PRIVATE,Modifier.FINAL).build())
 
 

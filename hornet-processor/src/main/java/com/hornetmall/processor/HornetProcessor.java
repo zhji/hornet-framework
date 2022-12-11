@@ -1,6 +1,7 @@
 package com.hornetmall.processor;
 
 import com.google.auto.service.AutoService;
+import com.hornetmall.processor.config.Hornet;
 import com.hornetmall.processor.meta.EntityMeta;
 import com.hornetmall.processor.meta.FieldMeta;
 import com.squareup.javapoet.JavaFile;
@@ -49,6 +50,7 @@ public class HornetProcessor extends AbstractProcessor {
     @Override
     public synchronized void init(ProcessingEnvironment processingEnv) {
         this.processingEnv = processingEnv;
+        Hornet.init(processingEnv);
     }
 
     @Override

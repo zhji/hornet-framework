@@ -2,6 +2,7 @@ package com.hornetmall.processor.meta;
 
 import com.google.common.base.CaseFormat;
 import com.hornetmall.processor.annotation.ReadOnly;
+import com.hornetmall.processor.config.Hornet;
 import com.hornetmall.processor.util.Inflector;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.FieldSpec;
@@ -31,6 +32,7 @@ public class EntityMeta {
     private String idName;
     private TypeMirror idType;
     private VariableElement idTypeElement;
+
 
     private List<FieldMeta> fields;
 
@@ -114,16 +116,14 @@ public class EntityMeta {
     public ClassName getControllerName() {
         return ClassName.bestGuess(this.basePackage() + ".controller." + this.baseName() + "Controller");
     }
-
+    public ClassName getModuleConstants() {
+        return ClassName.bestGuess(this.basePackage() + ".constant." +CaseFormat.LOWER_CAMEL.to(CaseFormat.UPPER_CAMEL, Hornet.getInstance().getModule()) + "Constants");
+    }
 
     public ClassName getEntitiesName() {
-        return ClassName.bestGuess(this.basePackage() + ".constant." + Inflector.getInstance().pluralize(this.baseName()) + "");
+        return ClassName.bestGuess(this.basePackage() + ".constant.authorities." + Inflector.getInstance().pluralize(this.baseName()) + "");
     }
 
-
-    public ClassName getEntitiesAuthoritiesName() {
-        return ClassName.bestGuess(this.basePackage() + ".constant." + Inflector.getInstance().pluralize(this.baseName()) + "$Authorities");
-    }
 
     public ClassName getMapperName() {
         return ClassName.bestGuess(this.basePackage() + ".mapper." + this.baseName() + "Mapper");
@@ -134,9 +134,6 @@ public class EntityMeta {
         return CaseFormat.UPPER_CAMEL.to(CaseFormat.LOWER_CAMEL, this.baseName() + "Mapper");
     }
 
-    public ClassName getAuthoritiesName() {
-        return ClassName.bestGuess(this.basePackage() + ".authority." + this.baseName() + "Authorities");
-    }
 
 
     public ClassName getCreateCommandName() {
@@ -144,11 +141,6 @@ public class EntityMeta {
     }
 
     public ClassName getUpdateCommandName() {
-        return ClassName.bestGuess(this.basePackage() + ".domain.command." + this.baseName() + "UpdateCommand");
-    }
-
-
-    public ClassName getPatchCommandName() {
         return ClassName.bestGuess(this.basePackage() + ".domain.command." + this.baseName() + "UpdateCommand");
     }
 

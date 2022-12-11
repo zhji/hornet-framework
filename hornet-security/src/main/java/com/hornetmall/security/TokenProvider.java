@@ -6,7 +6,9 @@ import com.hornetmall.security.userdetails.SecurityUser;
 import com.nimbusds.jose.*;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
+import lombok.experimental.Accessors;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.core.GrantedAuthorityDefaults;
@@ -17,8 +19,11 @@ import org.springframework.security.web.authentication.Http403ForbiddenEntryPoin
 import org.springframework.web.client.HttpClientErrorException;
 
 import java.text.ParseException;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Date;
 import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
@@ -28,16 +33,25 @@ public class TokenProvider {
     private final JWSSigner signer;
     private final JWSVerifier verifier;
 
-    public String createToken(Authentication authentication) throws JOSEException {
+    public JWTToken createToken(Authentication authentication) throws JOSEException {
+
+        LocalDateTime now=LocalDateTime.now();
+        LocalDateTime expiredTime = now.plusSeconds(securityProperties.getJwt().getExpiredInSeconds());
+
 
         JWTClaimsSet.Builder setBuilder=new JWTClaimsSet.Builder();
         setBuilder
-                .audience(authentication.getAuthorities().stream().distinct().map(GrantedAuthority::getAuthority).collect(Collectors.toList()))
+                .claim(AUTHORITIES_KEY,authentication.getAuthorities().stream().distinct().map(GrantedAuthority::getAuthority).collect(Collectors.toList()))
+                .issueTime(Date.from(now.atZone(ZoneOffset.systemDefault()).toInstant()))
+                .expirationTime(Date.from(expiredTime.atZone(ZoneOffset.systemDefault()).toInstant()))
                 .subject(authentication.getPrincipal().toString());
+
         SignedJWT jwt=new SignedJWT(new JWSHeader(JWSAlgorithm.HS256),setBuilder.build());
 
         jwt.sign(signer);
-        return jwt.serialize();
+        String token = jwt.serialize();
+
+        return new JWTToken().setToken(token).setIssueTime(Date.from(now.atZone(ZoneOffset.systemDefault()).toInstant()).getTime()).setExpiredIn(securityProperties.getJwt().getExpiredInSeconds());
     }
 
 
@@ -69,5 +83,14 @@ public class TokenProvider {
         }catch (Exception e){
             throw new UnauthorizedException("Token验证失败");
         }
+    }
+
+
+    @Data
+    @Accessors(chain = true)
+    public static class JWTToken{
+        private String token;
+        private Long issueTime;
+        private Long expiredIn;
     }
 }

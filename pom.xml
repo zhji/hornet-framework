@@ -50,6 +50,12 @@
 				<artifactId>hornet-framework</artifactId>
 				<version>${hornet.version}</version>
 			</dependency>
+
+			<dependency>
+				<groupId>com.hornetmall</groupId>
+				<artifactId>hornet-security</artifactId>
+				<version>${hornet.version}</version>
+			</dependency>
 		</dependencies>
 	</dependencyManagement>
 
