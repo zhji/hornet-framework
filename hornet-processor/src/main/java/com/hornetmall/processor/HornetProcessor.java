@@ -1,11 +1,9 @@
 package com.hornetmall.processor;
 
-import com.google.auto.service.AutoService;
+import com.hornetmall.processor.annotation.Generated;
 import com.hornetmall.processor.config.Hornet;
 import com.hornetmall.processor.meta.EntityMeta;
 import com.hornetmall.processor.meta.FieldMeta;
-import com.squareup.javapoet.JavaFile;
-import com.squareup.javapoet.TypeSpec;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 
@@ -14,16 +12,9 @@ import javax.annotation.processing.ProcessingEnvironment;
 import javax.annotation.processing.RoundEnvironment;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
-import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
-import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.ElementFilter;
-import javax.lang.model.util.Elements;
-import javax.tools.JavaFileObject;
-import java.io.IOException;
-import java.io.Writer;
-import java.lang.reflect.Field;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -31,7 +22,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 
-@AutoService(HornetProcessor.class)
+
 public class HornetProcessor extends AbstractProcessor {
 
     public HornetProcessor() {
@@ -68,7 +59,7 @@ public class HornetProcessor extends AbstractProcessor {
 
         Set<? extends Element> entities = roundEnv.getElementsAnnotatedWith(Entity.class);
 
-        this.entityMetas = ElementFilter.typesIn(entities).stream().map(this::toEntityMeta).collect(Collectors.toList());
+        this.entityMetas = ElementFilter.typesIn(entities).stream().filter(typeElement -> Objects.isNull(typeElement.getAnnotation(Generated.class))).map(this::toEntityMeta).collect(Collectors.toList());
 
         entityMetas.forEach(entityMeta -> {
 

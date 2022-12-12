@@ -27,7 +27,7 @@ public class SecurityProperties {
     @Data
     @Accessors(chain = true)
     public static final class Jwt{
-        private String signerKey= Base64.getEncoder().encodeToString("hornet-mall//".getBytes(StandardCharsets.UTF_8));
+        private String signerKey= Base64.getEncoder().encodeToString("hornet-mall-signer-key-202212111637".getBytes(StandardCharsets.UTF_8));
         private Long expiredInSeconds=1800L;
     }
 }

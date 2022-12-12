@@ -40,11 +40,12 @@ public class TokenProvider {
 
 
         JWTClaimsSet.Builder setBuilder=new JWTClaimsSet.Builder();
+        SecurityUser user = (SecurityUser)authentication.getPrincipal();
         setBuilder
                 .claim(AUTHORITIES_KEY,authentication.getAuthorities().stream().distinct().map(GrantedAuthority::getAuthority).collect(Collectors.toList()))
                 .issueTime(Date.from(now.atZone(ZoneOffset.systemDefault()).toInstant()))
                 .expirationTime(Date.from(expiredTime.atZone(ZoneOffset.systemDefault()).toInstant()))
-                .subject(authentication.getPrincipal().toString());
+                .subject(user.getId().toString());
 
         SignedJWT jwt=new SignedJWT(new JWSHeader(JWSAlgorithm.HS256),setBuilder.build());
 
@@ -81,7 +82,7 @@ public class TokenProvider {
 
             return new UsernamePasswordAuthenticationToken(principal, token, authorities);
         }catch (Exception e){
-            throw new UnauthorizedException("Token验证失败");
+            throw new UnauthorizedException("Token验证失败",e);
         }
     }
 

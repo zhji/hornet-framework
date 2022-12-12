@@ -9,6 +9,8 @@ import com.nimbusds.jose.KeyLengthException;
 import com.nimbusds.jose.crypto.MACSigner;
 import com.nimbusds.jose.crypto.MACVerifier;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -22,15 +24,17 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter;
-
+@Slf4j
 @Configuration
-@RequiredArgsConstructor
+@AutoConfiguration()
 @ConditionalOnProperty(prefix = "hornet.security",name = "enabled",havingValue = "true")
 @Import(SecurityProperties.class)
 public class SecurityAutoConfiguration {
 
 
-
+    public SecurityAutoConfiguration() {
+        log.info("On SecurityAutoConfiguration");
+    }
 
     @Bean
     @ConditionalOnMissingBean
@@ -86,17 +90,20 @@ public class SecurityAutoConfiguration {
                 .and()
                 . authorizeHttpRequests()
 
-                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                .requestMatchers(HttpMethod.OPTIONS, "/*").permitAll()
 
 
-                .requestMatchers("/**/*.{js,html}").permitAll()
-                .requestMatchers("/i18n/**").permitAll()
-                .requestMatchers("/swagger-ui/**").permitAll()
-                .requestMatchers("/test/**").permitAll()
+                .requestMatchers("/*/*.js").permitAll()
+                .requestMatchers("/*/*.html").permitAll()
+                .requestMatchers("/i18n/*").permitAll()
+                .requestMatchers("/swagger-ui/*").permitAll()
+                .requestMatchers("/v3/api-docs/*").permitAll()
+                .requestMatchers("/test/*").permitAll()
+                .requestMatchers("/v1/api/oauth/authenticate").permitAll()
                 .requestMatchers(securityProperties.getPermitAll().toArray(new String[securityProperties.getPermitAll().size()])).permitAll()
                 .requestMatchers(securityProperties.getAuthenticated().toArray(new String[securityProperties.getAuthenticated().size()])).authenticated()
                 .requestMatchers("/management/health").permitAll()
-                .requestMatchers("/management/health/**").permitAll()
+                .requestMatchers("/management/health/*").permitAll()
                 .requestMatchers("/management/info").permitAll()
                 .requestMatchers("/management/prometheus").permitAll()
                 .and()
