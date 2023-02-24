@@ -60,9 +60,14 @@ public class HornetProcessor extends AbstractProcessor {
         Set<? extends Element> entities = roundEnv.getElementsAnnotatedWith(Entity.class);
 
         this.entityMetas = ElementFilter.typesIn(entities).stream().filter(typeElement -> Objects.isNull(typeElement.getAnnotation(Generated.class))).map(this::toEntityMeta).collect(Collectors.toList());
-
+        String match = Hornet.getInstance().getMatch();
         entityMetas.forEach(entityMeta -> {
 
+            if (Objects.nonNull(match)) {
+                if (!entityMeta.getName().matches(match)) {
+                    return;
+                }
+            }
 
             try {
 

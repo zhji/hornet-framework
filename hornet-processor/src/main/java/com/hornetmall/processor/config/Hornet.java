@@ -26,6 +26,7 @@ public class Hornet {
     }
 
     private String module;
+    private String match;
 
 
     public Hornet() {

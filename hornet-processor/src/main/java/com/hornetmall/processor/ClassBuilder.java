@@ -222,7 +222,15 @@ public class ClassBuilder {
                         .build())
 
 
-
+                .addMethod(MethodSpec.methodBuilder("view")
+                        .addModifiers( Modifier.PUBLIC)
+                        .returns(entityMeta.getViewDTOName())
+                        .addAnnotation(AnnotationSpec.builder(Transactional.class).addMember("readOnly","$L",true).build())
+                        .addParameter(ParameterSpec.builder(entityMeta.getIdClassName(),"id").build())
+                        .addCode(CodeBlock.builder()
+                                .add("return $L.findById(id).map($L::toViewDTO).orElseThrow(()->new NotContentException(\"用户不存在\"))",entityMeta.getRepositoryVariableName(),entityMeta.getMapperVariableName())
+                                .build())
+                        .build())
 
 
                 .addMethod(MethodSpec.methodBuilder("page")
@@ -235,6 +243,9 @@ public class ClassBuilder {
                                 .build())
                         .build())
                 .build();
+
+
+
     }
 
 
@@ -246,11 +257,11 @@ public class ClassBuilder {
                 .addField(FieldSpec.builder(String.class,"AUTHORITY_NAME").addModifiers(Modifier.PUBLIC,Modifier.STATIC,Modifier.FINAL).initializer("$S",entityMeta.entityName()).build())
                 .addType(TypeSpec.classBuilder("Authorities").addModifiers(Modifier.PUBLIC,Modifier.STATIC)
 
-                        .addField(FieldSpec.builder(String.class,"CREATE").addModifiers(Modifier.PUBLIC,Modifier.STATIC,Modifier.FINAL).initializer("MODULE+$S+AUTHORITY_NAME+$S",":",":create").build())
-                        .addField(FieldSpec.builder(String.class,"UPDATE").addModifiers(Modifier.PUBLIC,Modifier.STATIC,Modifier.FINAL).initializer("MODULE+$S+AUTHORITY_NAME+$S",":",":update").build())
-                        .addField(FieldSpec.builder(String.class,"PATCH").addModifiers(Modifier.PUBLIC,Modifier.STATIC,Modifier.FINAL).initializer("MODULE+$S+AUTHORITY_NAME+$S",":",":patch").build())
-                        .addField(FieldSpec.builder(String.class,"DELETE").addModifiers(Modifier.PUBLIC,Modifier.STATIC,Modifier.FINAL).initializer("MODULE+$S+AUTHORITY_NAME+$S",":",":delete").build())
-                        .addField(FieldSpec.builder(String.class,"QUERY").addModifiers(Modifier.PUBLIC,Modifier.STATIC,Modifier.FINAL).initializer("MODULE+$S+AUTHORITY_NAME+$S",":",":query").build())
+                        .addField(FieldSpec.builder(String.class,"CREATE").addModifiers(Modifier.PUBLIC,Modifier.STATIC,Modifier.FINAL).initializer("MODULE+$S+AUTHORITY_NAME+$S","_","_create").build())
+                        .addField(FieldSpec.builder(String.class,"UPDATE").addModifiers(Modifier.PUBLIC,Modifier.STATIC,Modifier.FINAL).initializer("MODULE+$S+AUTHORITY_NAME+$S","_","_update").build())
+                        .addField(FieldSpec.builder(String.class,"PATCH").addModifiers(Modifier.PUBLIC,Modifier.STATIC,Modifier.FINAL).initializer("MODULE+$S+AUTHORITY_NAME+$S","_","_patch").build())
+                        .addField(FieldSpec.builder(String.class,"DELETE").addModifiers(Modifier.PUBLIC,Modifier.STATIC,Modifier.FINAL).initializer("MODULE+$S+AUTHORITY_NAME+$S","_","_delete").build())
+                        .addField(FieldSpec.builder(String.class,"QUERY").addModifiers(Modifier.PUBLIC,Modifier.STATIC,Modifier.FINAL).initializer("MODULE+$S+AUTHORITY_NAME+$S","_","_query").build())
                         .build())
                 .build();
     }
@@ -290,6 +301,24 @@ public class ClassBuilder {
 
 
 
+
+                .addMethod(MethodSpec.methodBuilder("view")
+                        .addModifiers(Modifier.PUBLIC)
+                        .returns(ResponseEntity.class)
+
+                        .addAnnotation(AnnotationSpec.builder(PutMapping.class).addMember("value","$S","/{id}").build())
+                        .addAnnotation(AnnotationSpec.builder(PreAuthorize.class).addMember("value","\"hasAuthority('\"+ $T.Authorities.QUERY +\"')\"",entityMeta.getEntitiesName()).build())
+
+                        .addParameter(ParameterSpec.builder(entityMeta.getIdClassName(),"id").addAnnotation(PathVariable.class).build())
+
+                        .addCode(CodeBlock.builder()
+                                .add("return ResponseEntity.ok($L.view(id));",entityMeta.getServiceVariableName())
+                                .build())
+                        .build())
+
+
+
+
                 .addMethod(MethodSpec.methodBuilder("create")
                         .addModifiers(Modifier.PUBLIC)
                         .returns(ResponseEntity.class)
@@ -297,7 +326,7 @@ public class ClassBuilder {
                         .addAnnotation(PostMapping.class)
                         .addAnnotation(AnnotationSpec.builder(PreAuthorize.class).addMember("value","\"hasAuthority('\"+ $T.Authorities.CREATE +\"')\"",entityMeta.getEntitiesName()).build())
 
-                        .addParameter(entityMeta.getCreateCommandName(),"command")
+                        .addParameter(ParameterSpec.builder( entityMeta.getCreateCommandName(),"command").addAnnotation(RequestBody.class).build())
                         .addCode(CodeBlock.builder()
                                 .add("$L.create(command);",entityMeta.getServiceVariableName())
                                 .add("return ResponseEntity.created(null).build();",entityMeta.getServiceVariableName())
@@ -315,7 +344,7 @@ public class ClassBuilder {
 
                         .addParameter(ParameterSpec.builder(entityMeta.getIdClassName(),"id").addAnnotation(PathVariable.class).build())
 
-                        .addParameter(entityMeta.getUpdateCommandName(),"command")
+                        .addParameter(ParameterSpec.builder( entityMeta.getCreateCommandName(),"command").addAnnotation(RequestBody.class).build())
                         .addCode(CodeBlock.builder()
                                 .add("$L.update(id,command);",entityMeta.getServiceVariableName())
                                 .add("return ResponseEntity.ok().build();",entityMeta.getServiceVariableName())
@@ -332,7 +361,7 @@ public class ClassBuilder {
                         .addAnnotation(AnnotationSpec.builder(PatchMapping.class).addMember("value","$S","/{id}").build())
                         .addAnnotation(AnnotationSpec.builder(PreAuthorize.class).addMember("value","\"hasAuthority('\"+ $T.Authorities.PATCH +\"')\"",entityMeta.getEntitiesName()).build())
                         .addParameter(ParameterSpec.builder(entityMeta.getIdClassName(),"id").addAnnotation(PathVariable.class).build())
-                        .addParameter(entityMeta.getUpdateCommandName(),"command")
+                        .addParameter(ParameterSpec.builder( entityMeta.getCreateCommandName(),"command").addAnnotation(RequestBody.class).build())
                         .addCode(CodeBlock.builder()
                                 .add("$L.patch(id,command);",entityMeta.getServiceVariableName())
                                 .add("return ResponseEntity.ok().build();",entityMeta.getServiceVariableName())
