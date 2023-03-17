@@ -68,7 +68,7 @@ public class EntityMeta {
     public List<FieldSpec> getDTOFields() {
 
         return fields.stream()
-                .filter(f -> Objects.isNull(f.getVariableElement().getAnnotation(Id.class)) && Objects.isNull(f.getVariableElement().getAnnotation(ReadOnly.class)))
+                .filter(f ->  Objects.isNull(f.getVariableElement().getAnnotation(ReadOnly.class)))
                 .filter(f -> Objects.isNull(f.getVariableElement().getAnnotation(ManyToMany.class)) && Objects.isNull(f.getVariableElement().getAnnotation(OneToMany.class)))
                 .map(f -> FieldSpec.builder(ClassName.get(f.getType()), f.getName()).addModifiers(Modifier.PRIVATE).build()).collect(Collectors.toList());
     }
@@ -77,7 +77,7 @@ public class EntityMeta {
     public List<FieldSpec> getViewDTOFields() {
 
         return fields.stream()
-                .filter(f -> Objects.isNull(f.getVariableElement().getAnnotation(Id.class)) && Objects.isNull(f.getVariableElement().getAnnotation(ReadOnly.class)))
+                .filter(f ->Objects.isNull(f.getVariableElement().getAnnotation(ReadOnly.class)))
                 .filter(f -> Objects.isNull(f.getVariableElement().getAnnotation(ManyToMany.class)) && Objects.isNull(f.getVariableElement().getAnnotation(OneToMany.class)))
                 .map(f -> FieldSpec.builder(ClassName.get(f.getType()), f.getName()).addModifiers(Modifier.PRIVATE).build()).collect(Collectors.toList());
     }

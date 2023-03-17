@@ -4,6 +4,7 @@ import com.hornetmall.processor.config.Hornet;
 import com.hornetmall.processor.meta.EntityMeta;
 import com.hornetmall.processor.util.ClassUtils;
 import com.squareup.javapoet.*;
+import io.swagger.v3.oas.models.Operation;
 import jakarta.persistence.PersistenceUnit;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
@@ -22,6 +23,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.processing.Filer;
@@ -228,7 +230,7 @@ public class ClassBuilder {
                         .addAnnotation(AnnotationSpec.builder(Transactional.class).addMember("readOnly","$L",true).build())
                         .addParameter(ParameterSpec.builder(entityMeta.getIdClassName(),"id").build())
                         .addCode(CodeBlock.builder()
-                                .add("return $L.findById(id).map($L::toViewDTO).orElseThrow(()->new NotContentException(\"用户不存在\"))",entityMeta.getRepositoryVariableName(),entityMeta.getMapperVariableName())
+                                .add("return $L.findById(id).map($L::toViewDTO).orElseThrow(()->new NotContentException(\"用户不存在\"));",entityMeta.getRepositoryVariableName(),entityMeta.getMapperVariableName())
                                 .build())
                         .build())
 
@@ -287,8 +289,8 @@ public class ClassBuilder {
                         .addModifiers(Modifier.PUBLIC)
                         .returns(ParameterizedTypeName.get(ClassName.get(ResponseEntity.class),ParameterizedTypeName.get(ClassName.get(Page.class),entityMeta.getDTOName())))
                         .addAnnotation(GetMapping.class)
+                        .addAnnotation(AnnotationSpec.builder(Operation.class).addMember("description","\"权限标识:\"+ $T.Authorities.QUERY",entityMeta.getEntitiesName()).build())
                         .addAnnotation(AnnotationSpec.builder(PreAuthorize.class).addMember("value","\"hasAuthority('\"+ $T.Authorities.QUERY +\"')\"",entityMeta.getEntitiesName()).build())
-
                         .addParameter(entityMeta.getQueryName(),"query")
                         .addCode(CodeBlock.builder()
                                 .add("return ResponseEntity.ok($L.page(query));",entityMeta.getServiceVariableName())
@@ -304,11 +306,11 @@ public class ClassBuilder {
 
                 .addMethod(MethodSpec.methodBuilder("view")
                         .addModifiers(Modifier.PUBLIC)
-                        .returns(ResponseEntity.class)
+                        .returns(ParameterizedTypeName.get(ClassName.get(ResponseEntity.class),ParameterizedTypeName.get(entityMeta.getViewDTOName())))
 
-                        .addAnnotation(AnnotationSpec.builder(PutMapping.class).addMember("value","$S","/{id}").build())
+                        .addAnnotation(AnnotationSpec.builder(GetMapping.class).addMember("value","$S","/{id}").build())
                         .addAnnotation(AnnotationSpec.builder(PreAuthorize.class).addMember("value","\"hasAuthority('\"+ $T.Authorities.QUERY +\"')\"",entityMeta.getEntitiesName()).build())
-
+                        .addAnnotation(AnnotationSpec.builder(Operation.class).addMember("description","\"权限标识:\"+ $T.Authorities.QUERY",entityMeta.getEntitiesName()).build())
                         .addParameter(ParameterSpec.builder(entityMeta.getIdClassName(),"id").addAnnotation(PathVariable.class).build())
 
                         .addCode(CodeBlock.builder()
@@ -325,8 +327,8 @@ public class ClassBuilder {
 
                         .addAnnotation(PostMapping.class)
                         .addAnnotation(AnnotationSpec.builder(PreAuthorize.class).addMember("value","\"hasAuthority('\"+ $T.Authorities.CREATE +\"')\"",entityMeta.getEntitiesName()).build())
-
-                        .addParameter(ParameterSpec.builder( entityMeta.getCreateCommandName(),"command").addAnnotation(RequestBody.class).build())
+                        .addAnnotation(AnnotationSpec.builder(Operation.class).addMember("description","\"权限标识:\"+ $T.Authorities.CREATE",entityMeta.getEntitiesName()).build())
+                        .addParameter(ParameterSpec.builder( entityMeta.getCreateCommandName(),"command").addAnnotation(Validated.class).addAnnotation(RequestBody.class).build())
                         .addCode(CodeBlock.builder()
                                 .add("$L.create(command);",entityMeta.getServiceVariableName())
                                 .add("return ResponseEntity.created(null).build();",entityMeta.getServiceVariableName())
@@ -341,10 +343,10 @@ public class ClassBuilder {
 
                         .addAnnotation(AnnotationSpec.builder(PutMapping.class).addMember("value","$S","/{id}").build())
                         .addAnnotation(AnnotationSpec.builder(PreAuthorize.class).addMember("value","\"hasAuthority('\"+ $T.Authorities.UPDATE +\"')\"",entityMeta.getEntitiesName()).build())
-
+                        .addAnnotation(AnnotationSpec.builder(Operation.class).addMember("description","\"权限标识:\"+ $T.Authorities.UPDATE",entityMeta.getEntitiesName()).build())
                         .addParameter(ParameterSpec.builder(entityMeta.getIdClassName(),"id").addAnnotation(PathVariable.class).build())
 
-                        .addParameter(ParameterSpec.builder( entityMeta.getCreateCommandName(),"command").addAnnotation(RequestBody.class).build())
+                        .addParameter(ParameterSpec.builder( entityMeta.getUpdateCommandName(),"command").addAnnotation(Validated.class).addAnnotation(RequestBody.class).build())
                         .addCode(CodeBlock.builder()
                                 .add("$L.update(id,command);",entityMeta.getServiceVariableName())
                                 .add("return ResponseEntity.ok().build();",entityMeta.getServiceVariableName())
@@ -359,9 +361,10 @@ public class ClassBuilder {
                         .returns(ResponseEntity.class)
 
                         .addAnnotation(AnnotationSpec.builder(PatchMapping.class).addMember("value","$S","/{id}").build())
+                        .addAnnotation(AnnotationSpec.builder(Operation.class).addMember("description","\"权限标识:\"+ $T.Authorities.PATCH",entityMeta.getEntitiesName()).build())
                         .addAnnotation(AnnotationSpec.builder(PreAuthorize.class).addMember("value","\"hasAuthority('\"+ $T.Authorities.PATCH +\"')\"",entityMeta.getEntitiesName()).build())
                         .addParameter(ParameterSpec.builder(entityMeta.getIdClassName(),"id").addAnnotation(PathVariable.class).build())
-                        .addParameter(ParameterSpec.builder( entityMeta.getCreateCommandName(),"command").addAnnotation(RequestBody.class).build())
+                        .addParameter(ParameterSpec.builder( entityMeta.getUpdateCommandName(),"command").addAnnotation(Validated.class).addAnnotation(RequestBody.class).build())
                         .addCode(CodeBlock.builder()
                                 .add("$L.patch(id,command);",entityMeta.getServiceVariableName())
                                 .add("return ResponseEntity.ok().build();",entityMeta.getServiceVariableName())
@@ -376,6 +379,7 @@ public class ClassBuilder {
                         .returns(ResponseEntity.class)
 
                         .addAnnotation(AnnotationSpec.builder(DeleteMapping.class).addMember("value","$S","/{id}").build())
+                        .addAnnotation(AnnotationSpec.builder(Operation.class).addMember("description","\"权限标识:\"+ $T.Authorities.DELETE",entityMeta.getEntitiesName()).build())
                         .addAnnotation(AnnotationSpec.builder(PreAuthorize.class).addMember("value","\"hasAuthority('\"+ $T.Authorities.DELETE +\"')\"",entityMeta.getEntitiesName()).build())
                         .addParameter(ParameterSpec.builder(entityMeta.getIdClassName(),"id").addAnnotation(PathVariable.class).build())
                         .addCode(CodeBlock.builder()
