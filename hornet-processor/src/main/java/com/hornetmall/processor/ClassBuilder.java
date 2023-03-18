@@ -75,6 +75,15 @@ public class ClassBuilder {
                 .build();
     }
 
+    public TypeSpec buildPatchCommand() {
+        return TypeSpec.classBuilder(ClassUtils.getPatchCommandName(entityMeta))
+                .addModifiers(Modifier.PUBLIC)
+                .addAnnotation(Data.class)
+                .addAnnotation(AnnotationSpec.builder(Accessors.class).addMember("chain", "$L", true).build())
+                .addFields(entityMeta.getCreateFields())
+                .build();
+    }
+
     public TypeSpec buildDTO() {
         return TypeSpec.classBuilder(ClassUtils.getDTOName(entityMeta))
                 .addModifiers(Modifier.PUBLIC)
@@ -134,7 +143,7 @@ public class ClassBuilder {
                 .addMethod(MethodSpec.methodBuilder("patchToEntity")
                         .addModifiers(Modifier.ABSTRACT, Modifier.PUBLIC)
                         .addAnnotation(AnnotationSpec.builder(BeanMapping.class).addMember("nullValuePropertyMappingStrategy", "$T.$L", NullValuePropertyMappingStrategy.class, NullValuePropertyMappingStrategy.IGNORE).build())
-                        .addParameter(ParameterSpec.builder(ClassUtils.getUpdateCommandName(entityMeta), "command").build())
+                        .addParameter(ParameterSpec.builder(ClassUtils.getPatchCommandName(entityMeta), "command").build())
                         .addParameter(ParameterSpec.builder(ClassName.get(entityMeta.getType()), "entity").addAnnotation(MappingTarget.class).build())
                         .build())
 
@@ -199,7 +208,7 @@ public class ClassBuilder {
                         .addModifiers( Modifier.PUBLIC)
                         .addAnnotation(Transactional.class)
                         .addParameter(ParameterSpec.builder(entityMeta.getIdClassName(),"id").build())
-                        .addParameter(ParameterSpec.builder(entityMeta.getUpdateCommandName(), "command").build())
+                        .addParameter(ParameterSpec.builder(entityMeta.getPatchCommandName(), "command").build())
                         .addCode(CodeBlock.builder()
                                 .add("$L.findById(id).ifPresentOrElse(entity -> {\n" +
                                         "            $L.patchToEntity(command,entity);\n" +
@@ -364,7 +373,7 @@ public class ClassBuilder {
                         .addAnnotation(AnnotationSpec.builder(Operation.class).addMember("description","\"权限标识:\"+ $T.Authorities.PATCH",entityMeta.getEntitiesName()).build())
                         .addAnnotation(AnnotationSpec.builder(PreAuthorize.class).addMember("value","\"hasAuthority('\"+ $T.Authorities.PATCH +\"')\"",entityMeta.getEntitiesName()).build())
                         .addParameter(ParameterSpec.builder(entityMeta.getIdClassName(),"id").addAnnotation(PathVariable.class).build())
-                        .addParameter(ParameterSpec.builder( entityMeta.getUpdateCommandName(),"command").addAnnotation(Validated.class).addAnnotation(RequestBody.class).build())
+                        .addParameter(ParameterSpec.builder( entityMeta.getPatchCommandName(),"command").addAnnotation(Validated.class).addAnnotation(RequestBody.class).build())
                         .addCode(CodeBlock.builder()
                                 .add("$L.patch(id,command);",entityMeta.getServiceVariableName())
                                 .add("return ResponseEntity.ok().build();",entityMeta.getServiceVariableName())

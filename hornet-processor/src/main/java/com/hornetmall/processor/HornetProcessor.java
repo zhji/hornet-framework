@@ -4,21 +4,23 @@ import com.hornetmall.processor.annotation.Generated;
 import com.hornetmall.processor.config.Hornet;
 import com.hornetmall.processor.meta.EntityMeta;
 import com.hornetmall.processor.meta.FieldMeta;
+import com.squareup.javapoet.AnnotationSpec;
+import com.squareup.javapoet.ClassName;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
+import jakarta.validation.Constraint;
+import jakarta.validation.constraints.AssertTrue;
+import jakarta.validation.constraints.*;
 
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.annotation.processing.RoundEnvironment;
 import javax.lang.model.SourceVersion;
-import javax.lang.model.element.Element;
-import javax.lang.model.element.TypeElement;
-import javax.lang.model.element.VariableElement;
+import javax.lang.model.element.*;
 import javax.lang.model.util.ElementFilter;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
+import java.lang.reflect.Method;
+import java.util.*;
 import java.util.stream.Collectors;
 
 
@@ -32,6 +34,31 @@ public class HornetProcessor extends AbstractProcessor {
     private ProcessingEnvironment processingEnv;
 
     private List<EntityMeta> entityMetas;
+
+    private List<Class> validationAnnotaions=List.of(
+            AssertFalse              .class,
+            AssertTrue.class,
+            DecimalMax.class,
+            DecimalMin.class,
+            Digits.class,
+            Email.class,
+            Future.class,
+            FutureOrPresent.class,
+            Max.class,
+            Min.class,
+            Negative.class,
+            NegativeOrZero.class,
+            NotBlank.class,
+            NotEmpty.class,
+            NotNull.class,
+            Null.class,
+            Past.class,
+            PastOrPresent.class,
+            Pattern.class,
+            Positive.class,
+            PositiveOrZero.class,
+            Size.class
+    );
 
     @Override
     public SourceVersion getSupportedSourceVersion() {
@@ -105,6 +132,57 @@ public class HornetProcessor extends AbstractProcessor {
     }
 
     private FieldMeta toFieldMeta(VariableElement variableElement){
-        return new FieldMeta().setVariableElement(variableElement).setName(variableElement.getSimpleName().toString()).setType(variableElement.asType());
+        Column column = variableElement.getAnnotation(Column.class);
+        List<AnnotationSpec> validations=new ArrayList<>();
+        if (Objects.isNull(column)&&!column.nullable()) {
+            validations.add(AnnotationSpec.builder(NotNull.class).build());
+        }
+
+
+
+
+
+
+            for (AnnotationMirror mirror : variableElement.getAnnotationMirrors()) {
+                String annotationTypeName = mirror.getAnnotationType().asElement().getSimpleName().toString();
+                validationAnnotaions.stream().filter(a-> Objects.equals(a.getName(),annotationTypeName)).findFirst().ifPresent(annotationClass->{
+                    AnnotationSpec.Builder annotationBuilder = AnnotationSpec.builder(ClassName.bestGuess(annotationTypeName));
+
+                    for (Map.Entry<? extends ExecutableElement, ? extends AnnotationValue> entry : mirror.getElementValues().entrySet()) {
+                        String fieldName = entry.getKey().getSimpleName().toString();
+                        Object value = entry.getValue().getValue();
+                        try {
+                            Method method = annotationClass.getMethod(fieldName);
+                            Object defaultValue = method.getDefaultValue();
+                            if (value != null && !value.equals(defaultValue)) {
+                                annotationBuilder.addMember(fieldName, "$S", value);
+                            }
+                        } catch (NoSuchMethodException ignored) {
+                        }
+
+                    }
+
+                    validations.add(annotationBuilder.build());
+                });
+
+
+            }
+
+
+
+
+
+
+
+
+
+
+        return new FieldMeta()
+                .setValidationAnnotations(validations)
+                .setNullable(Objects.isNull(column)?true:column.nullable())
+                .setVariableElement(variableElement)
+                .setName(variableElement.getSimpleName().toString())
+                .setType(variableElement.asType());
     }
+
 }

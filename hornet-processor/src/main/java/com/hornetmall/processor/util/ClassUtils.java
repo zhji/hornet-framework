@@ -37,7 +37,7 @@ public class ClassUtils {
 
 
     public static ClassName getPatchCommandName(EntityMeta entityMeta){
-        return    ClassName.bestGuess(entityMeta.basePackage()+".domain.command."+entityMeta.baseName()+"UpdateCommand");
+        return    ClassName.bestGuess(entityMeta.basePackage()+".domain.command."+entityMeta.baseName()+"PatchCommand");
     }
 
 

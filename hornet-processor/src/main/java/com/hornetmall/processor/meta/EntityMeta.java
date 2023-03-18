@@ -62,7 +62,8 @@ public class EntityMeta {
         return fields.stream()
                 .filter(f -> Objects.isNull(f.getVariableElement().getAnnotation(Id.class)) && Objects.isNull(f.getVariableElement().getAnnotation(ReadOnly.class)))
                 .filter(f -> Objects.isNull(f.getVariableElement().getAnnotation(ManyToMany.class)) && Objects.isNull(f.getVariableElement().getAnnotation(OneToMany.class)))
-                .map(f -> FieldSpec.builder(ClassName.get(f.getType()), f.getName()).addModifiers(Modifier.PRIVATE).build()).collect(Collectors.toList());
+                .map(f ->  FieldSpec.builder(ClassName.get(f.getType()), f.getName()).addAnnotations(f.getValidationAnnotations()).addModifiers(Modifier.PRIVATE).build())
+                .collect(Collectors.toList());
     }
 
     public List<FieldSpec> getDTOFields() {
@@ -143,6 +144,12 @@ public class EntityMeta {
     public ClassName getUpdateCommandName() {
         return ClassName.bestGuess(this.basePackage() + ".domain.command." + this.baseName() + "UpdateCommand");
     }
+
+
+    public ClassName getPatchCommandName() {
+        return ClassName.bestGuess(this.basePackage() + ".domain.command." + this.baseName() + "PatchCommand");
+    }
+
 
 
     public ClassName getDTOName() {
