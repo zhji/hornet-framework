@@ -315,7 +315,7 @@ public class ClassBuilder {
 
                 .addMethod(MethodSpec.methodBuilder("view")
                         .addModifiers(Modifier.PUBLIC)
-                        .returns(ParameterizedTypeName.get(ClassName.get(ResponseEntity.class),ParameterizedTypeName.get(entityMeta.getViewDTOName())))
+                        .returns(ParameterizedTypeName.get(ClassName.get(ResponseEntity.class),entityMeta.getViewDTOName()))
 
                         .addAnnotation(AnnotationSpec.builder(GetMapping.class).addMember("value","$S","/{id}").build())
                         .addAnnotation(AnnotationSpec.builder(PreAuthorize.class).addMember("value","\"hasAuthority('\"+ $T.Authorities.QUERY +\"')\"",entityMeta.getEntitiesName()).build())
@@ -406,6 +406,8 @@ public class ClassBuilder {
         JavaFile.builder(this.entityMeta.getRepositoryName().packageName(),buildRepository()).build().writeTo(filer);
         JavaFile.builder(this.entityMeta.getCreateCommandName().packageName(),buildCreateCommand()).build().writeTo(filer);
         JavaFile.builder(this.entityMeta.getUpdateCommandName().packageName(),buildUpdateCommand()).build().writeTo(filer);
+        JavaFile.builder(this.entityMeta.getPatchCommandName().packageName(),buildPatchCommand()).build().writeTo(filer);
+
         JavaFile.builder(this.entityMeta.getDTOName().packageName(),buildDTO()).build().writeTo(filer);
         JavaFile.builder(this.entityMeta.getViewDTOName().packageName(),buildViewDTO()).build().writeTo(filer);
         JavaFile.builder(this.entityMeta.getQueryName().packageName(),buildQuery()).build().writeTo(filer);

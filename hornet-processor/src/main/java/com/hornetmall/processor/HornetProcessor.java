@@ -134,7 +134,7 @@ public class HornetProcessor extends AbstractProcessor {
     private FieldMeta toFieldMeta(VariableElement variableElement){
         Column column = variableElement.getAnnotation(Column.class);
         List<AnnotationSpec> validations=new ArrayList<>();
-        if (Objects.isNull(column)&&!column.nullable()) {
+        if (Objects.nonNull(column)&&!column.nullable()) {
             validations.add(AnnotationSpec.builder(NotNull.class).build());
         }
 
