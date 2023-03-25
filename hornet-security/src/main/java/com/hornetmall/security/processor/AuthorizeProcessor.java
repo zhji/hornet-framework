@@ -60,7 +60,7 @@ public class AuthorizeProcessor extends AbstractProcessor {
             String operation = swaggerOperationClass.map(clazz -> {
                 Annotation annotation = method.getAnnotation(clazz);
                 if (Objects.nonNull(annotation)) {
-                    Method operationId = ClassUtils.getMethod(clazz, "operationId");
+                    Method operationId = ClassUtils.getMethod(clazz, "summary");
                     try {
                         Object result = operationId.invoke(annotation);
                         if (Objects.nonNull(result) && StringUtils.hasText(result.toString())) {
@@ -74,23 +74,20 @@ public class AuthorizeProcessor extends AbstractProcessor {
             }).orElseGet(() -> method.getSimpleName().toString());
 
             PreAuthorize preAuthorize = method.getAnnotation(PreAuthorize.class);
-
-
+            String expression = preAuthorize.value();
             return new Meta().setOperation(operation)
-                    .setCode(preAuthorize.value())
+                    .setClassName(method.getEnclosingElement().asType().toString())
+                    .setCode(expression.substring(expression.indexOf("'"),expression.lastIndexOf("'")))
                     .setMethodName(method.getSimpleName().toString());
         }).collect(Collectors.toList());
 
 
-        if (roundEnv.processingOver()) {
-            try (OutputStream outputStream = createMetadataResource().openOutputStream()) {
+        try (OutputStream outputStream = createMetadataResource().openOutputStream()) {
 
-                ObjectMapper mapper = new ObjectMapper();
-                mapper.writeValue(outputStream, authorizeMeta);
-            } catch (Exception e) {
-                    log.error("write authoures failed");
-            }
-
+            ObjectMapper mapper = new ObjectMapper();
+            mapper.writeValue(outputStream, authorizeMeta);
+        } catch (Exception e) {
+            log.error("write authoures failed");
         }
 
 
