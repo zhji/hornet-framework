@@ -24,7 +24,6 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 
-
 public class HornetProcessor extends AbstractProcessor {
 
     public HornetProcessor() {
@@ -35,8 +34,8 @@ public class HornetProcessor extends AbstractProcessor {
 
     private List<EntityMeta> entityMetas;
 
-    private List<Class> validationAnnotaions=List.of(
-            AssertFalse              .class,
+    private List<Class> validationAnnotaions = List.of(
+            AssertFalse.class,
             AssertTrue.class,
             DecimalMax.class,
             DecimalMin.class,
@@ -98,7 +97,7 @@ public class HornetProcessor extends AbstractProcessor {
 
             try {
 
-                ClassBuilder classBuilder=new ClassBuilder(entityMeta);
+                ClassBuilder classBuilder = new ClassBuilder(entityMeta);
                 classBuilder.toFile(processingEnv.getFiler());
             } catch (Exception e) {
                 throw new RuntimeException(e);
@@ -106,15 +105,11 @@ public class HornetProcessor extends AbstractProcessor {
         });
 
 
-
-
         return false;
     }
 
 
-
-
-    private EntityMeta toEntityMeta(TypeElement typeElement){
+    private EntityMeta toEntityMeta(TypeElement typeElement) {
 
         Optional<VariableElement> id = ElementFilter.fieldsIn(processingEnv.getElementUtils().getAllMembers(typeElement)).stream().filter(item -> Objects.nonNull(item.getAnnotation(Id.class))).findFirst();
         if (!id.isPresent()) {
@@ -131,47 +126,41 @@ public class HornetProcessor extends AbstractProcessor {
                 .setFields(ElementFilter.fieldsIn(processingEnv.getElementUtils().getAllMembers(typeElement)).stream().map(this::toFieldMeta).collect(Collectors.toList()));
     }
 
-    private FieldMeta toFieldMeta(VariableElement variableElement){
+    private FieldMeta toFieldMeta(VariableElement variableElement) {
         Column column = variableElement.getAnnotation(Column.class);
-        List<AnnotationSpec> validations=new ArrayList<>();
-        if (Objects.nonNull(column)&&!column.nullable()) {
+
+        List<AnnotationSpec> validations = new ArrayList<>();
+        if (Objects.nonNull(column) && !column.nullable()) {
             validations.add(AnnotationSpec.builder(NotNull.class).build());
         }
 
 
+        for (AnnotationMirror mirror : variableElement.getAnnotationMirrors()) {
+            String annotationTypeName = mirror.getAnnotationType().asElement().getSimpleName().toString();
+            validationAnnotaions.stream().filter(a -> Objects.equals(a.getSimpleName(), annotationTypeName)).findFirst().ifPresent(annotationClass -> {
+                AnnotationSpec.Builder annotationBuilder = AnnotationSpec.builder(annotationClass);
 
-
-
-
-            for (AnnotationMirror mirror : variableElement.getAnnotationMirrors()) {
-                String annotationTypeName = mirror.getAnnotationType().asElement().getSimpleName().toString();
-                validationAnnotaions.stream().filter(a-> Objects.equals(a.getName(),annotationTypeName)).findFirst().ifPresent(annotationClass->{
-                    AnnotationSpec.Builder annotationBuilder = AnnotationSpec.builder(ClassName.bestGuess(annotationTypeName));
-
-                    for (Map.Entry<? extends ExecutableElement, ? extends AnnotationValue> entry : mirror.getElementValues().entrySet()) {
-                        String fieldName = entry.getKey().getSimpleName().toString();
-                        Object value = entry.getValue().getValue();
-                        try {
-                            Method method = annotationClass.getMethod(fieldName);
-                            Object defaultValue = method.getDefaultValue();
-                            if (value != null && !value.equals(defaultValue)) {
-                                annotationBuilder.addMember(fieldName, "$S", value);
-                            }
-                        } catch (NoSuchMethodException ignored) {
+                for (Map.Entry<? extends ExecutableElement, ? extends AnnotationValue> entry : mirror.getElementValues().entrySet()) {
+                    String fieldName = entry.getKey().getSimpleName().toString();
+                    Object value = entry.getValue().getValue();
+                    try {
+                        Method method = annotationClass.getMethod(fieldName);
+                        Object defaultValue = method.getDefaultValue();
+                        if (value != null && !value.equals(defaultValue)) {
+                            annotationBuilder.addMember(fieldName, "$S", value);
                         }
-
+                    } catch (NoSuchMethodException ignored) {
                     }
 
-                    validations.add(annotationBuilder.build());
-                });
+                }
+
+                validations.add(annotationBuilder.build());
+            });
 
 
-            }
+        }
 
-
-
-
-
+//        variableElement.getAnnotation(Filed)
 
 
 
@@ -179,7 +168,7 @@ public class HornetProcessor extends AbstractProcessor {
 
         return new FieldMeta()
                 .setValidationAnnotations(validations)
-                .setNullable(Objects.isNull(column)?true:column.nullable())
+                .setNullable(Objects.isNull(column) ? true : column.nullable())
                 .setVariableElement(variableElement)
                 .setName(variableElement.getSimpleName().toString())
                 .setType(variableElement.asType());

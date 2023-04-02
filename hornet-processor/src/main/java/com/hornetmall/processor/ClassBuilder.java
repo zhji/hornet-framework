@@ -4,8 +4,7 @@ import com.hornetmall.processor.config.Hornet;
 import com.hornetmall.processor.meta.EntityMeta;
 import com.hornetmall.processor.util.ClassUtils;
 import com.squareup.javapoet.*;
-import io.swagger.v3.oas.models.Operation;
-import jakarta.persistence.PersistenceUnit;
+import io.swagger.v3.oas.annotations.Operation;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.Root;
@@ -18,7 +17,8 @@ import org.mapstruct.MappingTarget;
 import org.mapstruct.NullValuePropertyMappingStrategy;
 import org.springframework.data.domain.Page;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
-import org.springframework.data.repository.CrudRepository;
+import org.springframework.data.querydsl.ListQuerydslPredicateExecutor;
+import org.springframework.data.repository.ListCrudRepository;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
@@ -46,22 +46,21 @@ public class ClassBuilder {
 
     public TypeSpec buildRepository() {
         return TypeSpec.interfaceBuilder(ClassUtils.getRepositoryName(entityMeta))
-
-
                 .addModifiers(Modifier.PUBLIC)
-                .addSuperinterface(ParameterizedTypeName.get(ClassName.get(CrudRepository.class), ClassName.get(entityMeta.getType()), ClassName.get(entityMeta.getIdType())))
+                .addSuperinterface(ParameterizedTypeName.get(ClassName.get(ListCrudRepository.class), ClassName.get(entityMeta.getType()), ClassName.get(entityMeta.getIdType())))
                 .addSuperinterface(ParameterizedTypeName.get(ClassName.get(JpaSpecificationExecutor.class), ClassName.get(entityMeta.getType())))
+                .addSuperinterface(ParameterizedTypeName.get(ClassName.get(ListQuerydslPredicateExecutor.class), ClassName.get(entityMeta.getType())))
                 .build();
     }
 
 
     public TypeSpec buildCreateCommand() {
         return TypeSpec.classBuilder(ClassUtils.getCreateCommandName(entityMeta))
-
                 .addModifiers(Modifier.PUBLIC)
                 .addAnnotation(Data.class)
                 .addAnnotation(AnnotationSpec.builder(Accessors.class).addMember("chain", "$L", true).build())
                 .addFields(entityMeta.getCreateFields())
+
                 .build();
     }
 
@@ -71,7 +70,7 @@ public class ClassBuilder {
                 .addModifiers(Modifier.PUBLIC)
                 .addAnnotation(Data.class)
                 .addAnnotation(AnnotationSpec.builder(Accessors.class).addMember("chain", "$L", true).build())
-                .addFields(entityMeta.getCreateFields())
+                .addFields(entityMeta.getUpdateFields())
                 .build();
     }
 
@@ -80,7 +79,7 @@ public class ClassBuilder {
                 .addModifiers(Modifier.PUBLIC)
                 .addAnnotation(Data.class)
                 .addAnnotation(AnnotationSpec.builder(Accessors.class).addMember("chain", "$L", true).build())
-                .addFields(entityMeta.getCreateFields())
+                .addFields(entityMeta.getPatchFields())
                 .build();
     }
 
@@ -111,11 +110,9 @@ public class ClassBuilder {
                 .superclass(ParameterizedTypeName.get(QUERY_SPECIFICATION_CLASS_NAME,entityMeta.getEntityClassName()))
                 .addAnnotation(AnnotationSpec.builder(Accessors.class).addMember("chain", "$L", true).build())
                 .addFields(entityMeta.getCreateFields())
-                .addMethod(MethodSpec.methodBuilder("buildPredicates")
+                .addMethod(MethodSpec.methodBuilder("buildExpression")
                         .addModifiers(Modifier.PROTECTED)
-                        .addParameter(ParameterSpec.builder(Root.class, "root").build())
-                        .addParameter(ParameterSpec.builder(CriteriaQuery.class, "query").build())
-                        .addParameter(ParameterSpec.builder(CriteriaBuilder.class, "criteriaBuilder").build())
+
                         .build())
                 .build();
     }

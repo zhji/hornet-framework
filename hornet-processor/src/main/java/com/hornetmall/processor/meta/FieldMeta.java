@@ -18,6 +18,15 @@ public class FieldMeta {
     private TypeMirror type;
     private boolean readyOnly=false;
     private boolean nullable;
+    private boolean dto;
+    private boolean view;
+    private boolean create;
+    private boolean update;
+    private boolean patch;
+
+    public boolean isBooleanType() {
+        return type.toString().equals("boolean") || type.toString().equals("java.lang.Boolean");
+    }
 
     private List<AnnotationSpec> validationAnnotations;
 

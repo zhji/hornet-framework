@@ -65,6 +65,23 @@ public class EntityMeta {
                 .map(f ->  FieldSpec.builder(ClassName.get(f.getType()), f.getName()).addAnnotations(f.getValidationAnnotations()).addModifiers(Modifier.PRIVATE).build())
                 .collect(Collectors.toList());
     }
+    public List<FieldSpec> getUpdateFields() {
+
+        return fields.stream()
+                .filter(f -> Objects.isNull(f.getVariableElement().getAnnotation(Id.class)) && Objects.isNull(f.getVariableElement().getAnnotation(ReadOnly.class)))
+                .filter(f -> Objects.isNull(f.getVariableElement().getAnnotation(ManyToMany.class)) && Objects.isNull(f.getVariableElement().getAnnotation(OneToMany.class)))
+                .map(f ->  FieldSpec.builder(f.isBooleanType()?ClassName.get(Boolean.class):ClassName.get(f.getType()), f.getName()).addAnnotations(f.getValidationAnnotations()).addModifiers(Modifier.PRIVATE).build())
+                .collect(Collectors.toList());
+    }
+
+    public List<FieldSpec> getPatchFields() {
+
+        return fields.stream()
+                .filter(f -> Objects.isNull(f.getVariableElement().getAnnotation(Id.class)) && Objects.isNull(f.getVariableElement().getAnnotation(ReadOnly.class)))
+                .filter(f -> Objects.isNull(f.getVariableElement().getAnnotation(ManyToMany.class)) && Objects.isNull(f.getVariableElement().getAnnotation(OneToMany.class)))
+                .map(f ->  FieldSpec.builder(f.isBooleanType()?ClassName.get(Boolean.class):ClassName.get(f.getType()), f.getName()).addAnnotations(f.getValidationAnnotations()).addModifiers(Modifier.PRIVATE).build())
+                .collect(Collectors.toList());
+    }
 
     public List<FieldSpec> getDTOFields() {
 
